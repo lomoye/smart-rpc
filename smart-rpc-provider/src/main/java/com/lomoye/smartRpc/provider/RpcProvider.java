@@ -1,5 +1,12 @@
 package com.lomoye.smartRpc.provider;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -7,8 +14,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -20,20 +25,25 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
 
     //TODO 注入服务注册器
 
-    private Map<String/*服务名称*/, Object> serviceMap;
+    private Map<String/*服务名称*/, Object> handlerMap;
 
-    /**
-     * Invoked by a BeanFactory after it has set all bean properties supplied
-     * (and satisfied BeanFactoryAware and ApplicationContextAware).
-     * <p>This method allows the bean instance to perform initialization only
-     * possible when all bean properties have been set and to throw an
-     * exception in the event of misconfiguration.
-     *
-     * @throws Exception in the event of misconfiguration (such
-     *                   as failure to set an essential property) or if initialization fails.
-     */
+
     @Override
     public void afterPropertiesSet() throws Exception {
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+
+        ServerBootstrap bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline()
+                                .addLast(new RpcDecoder(RpcRequest.class)) // 将 RPC 请求进行解码（为了处理请求）
+                                .addLast(new RpcEncoder(RpcResponse.class)) // 将 RPC 响应进行编码（为了返回响应）
+                                .addLast(new RpcHandler(handlerMap)); // 处理 RPC 请求
+                    }
+                });
 
     }
 
@@ -42,17 +52,13 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         Map<String, Object> rpcServiceMap = applicationContext.getBeansWithAnnotation(RpcService.class);
 
-        serviceMap.putAll(rpcServiceMap);
-
-        Object o = new Object();
-        Class clazz = o.getClass().getAnnotation(RpcService.class).value();
-        Method[] methods = clazz.getMethods();
-        for (Method m : methods) {
-            try {
-                Object invoke = m.invoke(o, new Object());
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
+        if (MapUtils.isEmpty(rpcServiceMap)) {
+            return;
         }
+
+        rpcServiceMap.forEach((k, v) -> {
+            String serviceName = v.getClass().getAnnotation(RpcService.class).value().getName();
+            handlerMap.put(serviceName, v);
+        });
     }
 }
