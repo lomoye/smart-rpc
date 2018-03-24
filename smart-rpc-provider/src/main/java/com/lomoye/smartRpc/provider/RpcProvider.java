@@ -39,28 +39,34 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-        ServerBootstrap bootstrap = new ServerBootstrap();
-        bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel socketChannel) throws Exception {
-                        socketChannel.pipeline()
-                                .addLast(new RpcDecoder(RpcRequest.class)) // 将 RPC 请求进行解码（为了处理请求）
-                                .addLast(new RpcEncoder(RpcResponse.class)) // 将 RPC 响应进行编码（为了返回响应）
-                                .addLast(new RpcHandler(handlerMap)); // 处理 RPC 请求
-                    }
-                })
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true);
+        try {
+            ServerBootstrap bootstrap = new ServerBootstrap();
+            bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                            socketChannel.pipeline()
+                                    .addLast(new RpcDecoder(RpcRequest.class)) // 将 RPC 请求进行解码（为了处理请求）
+                                    .addLast(new RpcEncoder(RpcResponse.class)) // 将 RPC 响应进行编码（为了返回响应）
+                                    .addLast(new RpcHandler(handlerMap)); // 处理 RPC 请求
+                        }
+                    })
+                    .option(ChannelOption.SO_BACKLOG, 128)
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-        //启动bootstrap
-        String[] address = serverAddress.split(":");
-        ChannelFuture future = bootstrap.bind(address[0], Integer.valueOf(address[1])).sync();
+            //启动bootstrap
+            String[] address = serverAddress.split(":");
+            ChannelFuture future = bootstrap.bind(address[0], Integer.valueOf(address[1])).sync();
 
-        //向zookeeper注册服务
-        serviceRegistry.register(serverAddress);
+            //向zookeeper注册服务
+            serviceRegistry.register(serverAddress);
 
-        future.channel().closeFuture().sync();
+            future.channel().closeFuture().sync();
+        } finally {
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
+
     }
 
 
