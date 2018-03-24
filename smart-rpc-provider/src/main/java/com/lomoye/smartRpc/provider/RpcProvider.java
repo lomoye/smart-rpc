@@ -2,6 +2,7 @@ package com.lomoye.smartRpc.provider;
 
 import com.lomoye.smartRpc.register.ServiceRegistry;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -25,7 +26,7 @@ import java.util.Map;
 public class RpcProvider implements ApplicationContextAware, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(RpcProvider.class);
 
-    //TODO 注入服务注册器
+    //注入服务注册器
     private ServiceRegistry serviceRegistry;
 
     private String serverAddress;//服务地址
@@ -52,11 +53,14 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-        //TODO 启动bootstrap
-
+        //启动bootstrap
+        String[] address = serverAddress.split(":");
+        ChannelFuture future = bootstrap.bind(address[0], Integer.valueOf(address[1])).sync();
 
         //向zookeeper注册服务
         serviceRegistry.register(serverAddress);
+
+        future.channel().closeFuture().sync();
     }
 
 
