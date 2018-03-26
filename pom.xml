@@ -12,6 +12,7 @@
     <modules>
         <module>smart-rpc-provider</module>
         <module>smart-rpc-register</module>
+        <module>smart-rpc-common</module>
     </modules>
 
     <properties>

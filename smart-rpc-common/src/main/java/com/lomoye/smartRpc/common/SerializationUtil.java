@@ -1,4 +1,4 @@
-package com.lomoye.smartRpc.provider;
+package com.lomoye.smartRpc.common;
 
 import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtostuffIOUtil;

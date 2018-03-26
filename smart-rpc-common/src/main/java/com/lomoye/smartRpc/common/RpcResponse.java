@@ -1,4 +1,4 @@
-package com.lomoye.smartRpc.provider;
+package com.lomoye.smartRpc.common;
 
 /**
  * Created by lomoye on 2018/3/22.
