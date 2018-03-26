@@ -30,10 +30,14 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
     //注入服务注册器
     private ServiceRegistry serviceRegistry;
 
-    private String serverAddress;//服务地址
+    private String serviceAddress;//服务地址
 
     private Map<String/*服务名称*/, Object> handlerMap;
 
+    public RpcProvider(ServiceRegistry serviceRegistry, String serviceAddress) {
+        this.serviceRegistry = serviceRegistry;
+        this.serviceAddress = serviceAddress;
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -56,11 +60,11 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             //启动bootstrap
-            String[] address = serverAddress.split(":");
+            String[] address = serviceAddress.split(":");
             ChannelFuture future = bootstrap.bind(address[0], Integer.valueOf(address[1])).sync();
 
             //向zookeeper注册服务
-            serviceRegistry.register(serverAddress);
+            serviceRegistry.register(serviceAddress);
 
             future.channel().closeFuture().sync();
         } finally {
