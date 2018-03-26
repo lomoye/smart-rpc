@@ -1,4 +1,4 @@
-package com.lomoye.smartRpc.provider;
+package com.lomoye.smartRpc.common;
 
 import org.springframework.stereotype.Component;
 
