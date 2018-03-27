@@ -15,7 +15,7 @@
         <constructor-arg name="registryAddress" value="${rpc.registry_address}"/>
     </bean>
 
-    <bean id="rpcServer" class="com.lomoye.smartRpc.provider.RpcProvider">
+    <bean id="rpcProvider" class="com.lomoye.smartRpc.provider.RpcProvider">
         <constructor-arg name="serviceAddress" value="${rpc.service_address}"/>
         <constructor-arg name="serviceRegistry" ref="serviceRegistry"/>
     </bean>

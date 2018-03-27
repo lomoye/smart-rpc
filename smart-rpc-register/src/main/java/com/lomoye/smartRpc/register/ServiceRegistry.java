@@ -1,10 +1,9 @@
 package com.lomoye.smartRpc.register;
 
-import org.apache.zookeeper.*;
+import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.serialize.SerializableSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by lomoye on 2018/3/23.
@@ -16,15 +15,13 @@ public class ServiceRegistry {
 
     private String registryAddress;//服务注册中心地址
 
-    private CountDownLatch countDownLatch = new CountDownLatch(1);
-
     public ServiceRegistry(String registryAddress) {
         this.registryAddress = registryAddress;
     }
 
     public void register(String data) {
         //连接zookeeper
-        ZooKeeper zooKeeper = connectZookeeper();
+        ZkClient zooKeeper = connectZookeeper();
 
         if (zooKeeper == null) {
             throw new RuntimeException("register zooKeeper failed");
@@ -34,30 +31,26 @@ public class ServiceRegistry {
         createNode(zooKeeper, data);
     }
 
-    private void createNode(ZooKeeper zooKeeper, String data) {
-        try {
-            String node = zooKeeper.create(Constant.ZK_DATA_PATH, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
-            LOGGER.warn("createNode success|node={}", node);
-        } catch (KeeperException | InterruptedException e) {
-            LOGGER.error("createNode error", e);
+    private void createNode(ZkClient zkClient, String data) {
+        // 创建 registry 节点（持久）
+        String registryPath = Constant.ZK_REGISTRY_PATH;
+        if (!zkClient.exists(registryPath)) {
+            zkClient.createPersistent(registryPath);
+            LOGGER.debug("create registry node: {}", registryPath);
         }
+
+
+        String addressPath = Constant.ZK_DATA_PATH;
+        String addressNode = zkClient.createEphemeralSequential(addressPath, data);
+        LOGGER.debug("create address node: {}", addressNode);
     }
 
-    private ZooKeeper connectZookeeper() {
-        ZooKeeper zooKeeper = null;
-        try {
-            zooKeeper = new ZooKeeper(registryAddress, Constant.ZK_SESSION_TIMEOUT, event -> {
-                if (Watcher.Event.KeeperState.SyncConnected.equals(event.getState())) {
-                    countDownLatch.countDown();
-                }
-            });
-
-            countDownLatch.await();
-        } catch (Exception e) {
-            LOGGER.error("register error", e);
-        }
-
-        return zooKeeper;
+    private ZkClient connectZookeeper() {
+        // 创建 ZooKeeper 客户端
+        ZkClient zkClient = new ZkClient(registryAddress, Constant.ZK_SESSION_TIMEOUT, Constant.ZK_CONNECTION_TIMEOUT
+                , new SerializableSerializer());
+        LOGGER.debug("connect zookeeper");
+        return zkClient;
     }
 
 

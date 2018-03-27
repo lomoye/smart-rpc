@@ -1,8 +1,6 @@
 package com.lomoye.smartRpc.register;
 
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.I0Itec.zkclient.ZkClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +25,7 @@ public class ServiceDiscovery {
     public ServiceDiscovery(String registryAddress) {
         this.registryAddress = registryAddress;
 
-        ZooKeeper zk = connectServer();
+        ZkClient zk = connectServer();
         if (zk != null) {
             watchNode(zk);
         }
@@ -48,39 +46,32 @@ public class ServiceDiscovery {
         return data;
     }
 
-    private void watchNode(ZooKeeper zk) {
+    private void watchNode(ZkClient zk) {
         try {
-            List<String> nodeList = zk.getChildren(Constant.ZK_REGISTRY_PATH, event -> {
-                if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    watchNode(zk);
-                }
-            });
+            List<String> nodeList = zk.getChildren(Constant.ZK_REGISTRY_PATH);
             List<String> dataList = new ArrayList<>();
             for (String node : nodeList) {
-                byte[] bytes = zk.getData(Constant.ZK_REGISTRY_PATH + "/" + node, false, null);
-                dataList.add(new String(bytes));
+                String data = zk.readData(Constant.ZK_REGISTRY_PATH + "/" + node);
+                dataList.add(data);
             }
             LOGGER.debug("node data: {}", dataList);
             this.dataList = dataList;
-        } catch (KeeperException | InterruptedException e) {
-            LOGGER.error("watchNode error", e);
+        } finally {
+            zk.close();
         }
     }
 
-    private ZooKeeper connectServer() {
-        ZooKeeper zk = null;
+    private ZkClient connectServer() {
+        ZkClient zkClient = null;
         try {
-            zk = new ZooKeeper(registryAddress, Constant.ZK_SESSION_TIMEOUT, event -> {
-                if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
-                    latch.countDown();
-                }
-            });
-            latch.await();
+            // 创建 ZooKeeper 客户端
+            zkClient = new ZkClient(registryAddress, Constant.ZK_SESSION_TIMEOUT, Constant.ZK_CONNECTION_TIMEOUT);
+            LOGGER.debug("connect zookeeper");
         } catch (Exception e) {
             LOGGER.error("connectServer error", e);
         }
 
-        return zk;
+        return zkClient;
     }
 
 }

@@ -19,6 +19,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lomoye on 2018/3/22.
@@ -32,7 +33,7 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
 
     private String serviceAddress;//服务地址
 
-    private Map<String/*服务名称*/, Object> handlerMap;
+    private Map<String/*服务名称*/, Object> handlerMap = new ConcurrentHashMap<>();
 
     public RpcProvider(ServiceRegistry serviceRegistry, String serviceAddress) {
         this.serviceRegistry = serviceRegistry;
@@ -67,6 +68,7 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
             serviceRegistry.register(serviceAddress);
 
             future.channel().closeFuture().sync();
+            System.out.println("hello");
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
