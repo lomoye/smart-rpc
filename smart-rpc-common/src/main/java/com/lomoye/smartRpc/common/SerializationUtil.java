@@ -44,7 +44,7 @@ public class SerializationUtil {
     }
 
     public static <T> T deserialize(byte[] data, Class<T> cls) {
-        T message = (T) objenesis.newInstance(cls);
+        T message = objenesis.newInstance(cls);
 
         Schema<T> schema = getSchema(cls);
 
