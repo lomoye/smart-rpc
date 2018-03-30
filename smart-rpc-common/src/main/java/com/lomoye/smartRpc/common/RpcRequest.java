@@ -1,5 +1,7 @@
 package com.lomoye.smartRpc.common;
 
+import java.util.Map;
+
 /**
  * Created by lomoye on 2018/3/22.
  */
@@ -13,6 +15,8 @@ public class RpcRequest {
     private Class<?>[] parameterTypes;
 
     private Object[] parameters;
+
+    private Map<String, String> context;//上下文信息
 
     public String getRequestId() {
         return requestId;
@@ -52,5 +56,13 @@ public class RpcRequest {
 
     public void setParameters(Object[] parameters) {
         this.parameters = parameters;
+    }
+
+    public Map<String, String> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String, String> context) {
+        this.context = context;
     }
 }

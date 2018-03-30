@@ -68,7 +68,6 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
             serviceRegistry.register(serviceAddress);
 
             future.channel().closeFuture().sync();
-            System.out.println("hello");
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();

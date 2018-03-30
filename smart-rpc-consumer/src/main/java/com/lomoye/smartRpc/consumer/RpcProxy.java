@@ -1,5 +1,6 @@
 package com.lomoye.smartRpc.consumer;
 
+import com.lomoye.smartRpc.common.RpcContext;
 import com.lomoye.smartRpc.common.RpcRequest;
 import com.lomoye.smartRpc.common.RpcResponse;
 import com.lomoye.smartRpc.register.ServiceDiscovery;
@@ -31,6 +32,9 @@ public class RpcProxy {
                     req.setParameters(args);
                     req.setParameterTypes(method.getParameterTypes());
 
+                    //上下文信息
+                    req.setContext(RpcContext.getContext().getAttachments());
+
                     String serviceAddress = serviceDiscovery.discover();
                     String[] array = serviceAddress.split(":");
                     String host = array[0];
@@ -39,6 +43,10 @@ public class RpcProxy {
 
                     //发送请求 获取返回值
                     RpcResponse resp = consumer.send(req);
+
+                    //清除上下文
+                    RpcContext.getContext().remove();
+
                     if (resp.getError() != null) {
                         throw resp.getError();
                     } else {

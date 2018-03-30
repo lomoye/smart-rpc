@@ -1,6 +1,7 @@
 package com.lomoye.smartRpc.provider;
 
 
+import com.lomoye.smartRpc.common.RpcContext;
 import com.lomoye.smartRpc.common.RpcRequest;
 import com.lomoye.smartRpc.common.RpcResponse;
 import io.netty.channel.ChannelFutureListener;
@@ -44,18 +45,25 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
     }
 
     private Object handle(RpcRequest rpcRequest) throws InvocationTargetException {
-        String className = rpcRequest.getClassName();
-        Object serviceBean = handlerMap.get(className);
+        //上下文传递
+        try {
+            RpcContext.getContext().setAttachments(rpcRequest.getContext());
 
-        Class<?> serviceClass = serviceBean.getClass();
-        String methodName = rpcRequest.getMethodName();
-        Class<?>[] parameterTypes = rpcRequest.getParameterTypes();
-        Object[] parameters = rpcRequest.getParameters();
+            String className = rpcRequest.getClassName();
+            Object serviceBean = handlerMap.get(className);
 
-        FastClass serviceFastClass = FastClass.create(serviceClass);
-        FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
+            Class<?> serviceClass = serviceBean.getClass();
+            String methodName = rpcRequest.getMethodName();
+            Class<?>[] parameterTypes = rpcRequest.getParameterTypes();
+            Object[] parameters = rpcRequest.getParameters();
 
-        return serviceFastMethod.invoke(serviceBean, parameters);
+            FastClass serviceFastClass = FastClass.create(serviceClass);
+            FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
+
+            return serviceFastMethod.invoke(serviceBean, parameters);
+        } finally {
+            RpcContext.getContext().remove();
+        }
     }
 
     @Override
