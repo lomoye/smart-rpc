@@ -1,4 +1,4 @@
-package com.lomoye.smartRpc.sampleProvider;
+package com.lomoye.smartRpc.sampleConsumer;
 
 import com.lomoye.smartRpc.api.HelloService;
 import com.lomoye.smartRpc.api.People;
