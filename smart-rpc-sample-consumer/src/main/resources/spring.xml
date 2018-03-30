@@ -17,4 +17,7 @@
         <constructor-arg name="serviceDiscovery" ref="serviceDiscovery"/>
     </bean>
 
+    <!--上下文过滤器-->
+    <bean id="consumerContextFilter" class="com.lomoye.smartRpc.sampleConsumer.ConsumerContextFilter"/>
+
 </beans>

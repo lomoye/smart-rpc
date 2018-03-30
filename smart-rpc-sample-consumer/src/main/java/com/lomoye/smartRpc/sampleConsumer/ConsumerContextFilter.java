@@ -11,7 +11,7 @@ public class ConsumerContextFilter implements ConsumerFilter {
     @Override
     public void doFilter() {
         //上下文信息
-        System.out.println("设置上下文中");
-        RpcContext.getContext().setAttachment("shard_id", "1");
+        System.out.println("设置上下文中....");
+        RpcContext.getContext().setAttachment("shard_id", "110");
     }
 }

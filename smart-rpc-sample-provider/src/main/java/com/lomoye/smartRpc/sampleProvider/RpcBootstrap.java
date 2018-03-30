@@ -1,4 +1,4 @@
-package com.lomoye.smartRpc.sampleConsumer;
+package com.lomoye.smartRpc.sampleProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,8 +1,7 @@
-package com.lomoye.smartRpc.sampleConsumer;
+package com.lomoye.smartRpc.sampleProvider;
 
 import com.lomoye.smartRpc.api.HelloService;
 import com.lomoye.smartRpc.api.People;
-import com.lomoye.smartRpc.common.RpcContext;
 import com.lomoye.smartRpc.common.RpcService;
 
 @RpcService(HelloService.class)
@@ -10,7 +9,7 @@ public class HelloServiceImpl implements HelloService {
 
     @Override
     public String hello(String words) {
-        String id = RpcContext.getContext().getAttachment("shard_id");
+        String id = AppContext.getContext().getAttachment("shard_id");
         return "欢迎使用智能rpc...收到您的消息:" + words + "|" + "上下文信息:" + id;
     }
 

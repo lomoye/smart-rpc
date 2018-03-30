@@ -2,7 +2,8 @@ package com.lomoye.smartRpc.common;
 
 /**
  * Created by lomoye on 2018/3/30.
- * TODO 这个类的作用
+ * 服务消费者过滤器
  */
-public class ConsumerFilter {
+public interface ConsumerFilter {
+    void doFilter();
 }

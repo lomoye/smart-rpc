@@ -18,6 +18,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,6 +36,8 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
     private String serviceAddress;//服务地址
 
     private Map<String/*服务名称*/, Object> handlerMap = new ConcurrentHashMap<>();
+
+    private final List<ProviderFilter> providerFilters = new ArrayList<>();
 
     public RpcProvider(ServiceRegistry serviceRegistry, String serviceAddress) {
         this.serviceRegistry = serviceRegistry;
@@ -54,7 +58,7 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
                             socketChannel.pipeline()
                                     .addLast(new RpcDecoder(RpcRequest.class)) // 将 RPC 请求进行解码（为了处理请求）
                                     .addLast(new RpcEncoder(RpcResponse.class)) // 将 RPC 响应进行编码（为了返回响应）
-                                    .addLast(new RpcHandler(handlerMap)); // 处理 RPC 请求
+                                    .addLast(new RpcHandler(handlerMap, providerFilters)); // 处理 RPC 请求
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
@@ -88,5 +92,9 @@ public class RpcProvider implements ApplicationContextAware, InitializingBean {
             String serviceName = v.getClass().getAnnotation(RpcService.class).value().getName();
             handlerMap.put(serviceName, v);
         });
+
+        //设置过滤器
+        Map<String, ProviderFilter> filterMap = applicationContext.getBeansOfType(ProviderFilter.class);
+        this.providerFilters.addAll(filterMap.values());
     }
 }
